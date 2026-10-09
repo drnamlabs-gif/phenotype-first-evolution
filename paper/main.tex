@@ -125,10 +125,10 @@ an inheritable epigenome, and whether such inheritance provides an evolutionary
 advantage over selection-only learning. To test this, we implement
 \textbf{Phenotype-First} (the \Pheno{} algorithm), a computational model in
 which organisms maintain two independent heritable layers: a genetic layer
-(100 bits, inherited with 2\% per-bit mutation) and an epigenetic layer
-(100 bits, inherited with perfect fidelity). During learning, organisms modify
-only the epigenetic layer; offspring inherit both layers, the genetic one with
-mutation and the epigenetic one unchanged.
+(a 100-bit genome, inherited with 2\% per-bit mutation) and an epigenetic
+layer (a list of learned patterns, inherited unchanged and in full). During
+learning, organisms add to the epigenetic layer; offspring inherit both
+layers, the genetic one with mutation and the epigenetic one unchanged.
 
 A critical distinction separates \Pheno{} from classical Lamarckism. Lamarck
 proposed write-back to the genes themselves, which fails because somatic
@@ -213,90 +213,125 @@ heritable epigenomic form, or whether this accelerates learning. We implement
 \subsection{Task environment}
 
 We use a visual pattern task on a $10 \times 10$ grid of cells
-(Figure~\ref{fig:task}). Three basic patterns are defined: \textbf{L} (an
-angular shape occupying 13 cells), \textbf{T} (a symmetric shape occupying 12
-cells), and \textbf{Plus} (a cross occupying 15 cells). Each pattern occupies a
-fixed subset of grid cells and remains constant across all generations.
+(Figure~\ref{fig:task}). Three target patterns are defined, each occupying 5
+fixed cells: \textbf{L} (a 3-cell vertical arm meeting a 3-cell horizontal arm
+at a shared corner), \textbf{T} (a 3-cell horizontal bar with a 2-cell stem
+descending from its centre), and \textbf{Plus} (a 5-cell cross). Each pattern
+occupies a fixed, pattern-specific subset of grid cells and remains constant
+across all generations.
 
-\emph{Simple} tasks require organisms to learn and reproduce a single pattern:
-L alone, T alone, or Plus alone. \emph{Compositional} tasks require organisms to
-simultaneously occupy the union of two patterns: L+T, L+Plus, or T+Plus. These
-compositional tasks cannot be solved by learning patterns sequentially within a
-generation---both patterns must be expressed simultaneously in the final
-phenotype.
+\emph{Simple} tasks require organisms to reproduce a single pattern: L alone,
+T alone, or Plus alone. \emph{Compositional} tasks require organisms to
+express two patterns at once: L+T, L+Plus, or T+Plus. Each component pattern
+is scored independently wherever it best appears in the organism's grid (see
+below), so compositional tasks cannot be solved by expressing one pattern and
+then the other within a generation---both must be simultaneously present in
+the final phenotype.
 
-Fitness is recall: the proportion of target cells occupied relative to the total
-size of the target pattern(s),
+Fitness is translation-invariant: an organism's cell set is compared against
+the target pattern(s) at every offset within a search window, and the
+best-scoring offset is kept. For \emph{simple} tasks, fitness is
+Intersection-over-Union (IoU) under the best alignment,
 \begin{equation}
-\mathrm{Fitness} \;=\; \frac{|\,P \cap T\,|}{|T|},
+\mathrm{Fitness}_{\mathrm{simple}} \;=\; \max_{(\Delta x,\Delta y)\,\in\,[-5,5]^2}
+\frac{|\,P_{\Delta x,\Delta y} \cap T\,|}{|\,P_{\Delta x,\Delta y} \cup T\,|},
 \end{equation}
-where $P$ is the set of cells the organism occupies and $T$ the target set. This
-metric rewards correct target coverage and permits preadaptation: organisms may
-occupy additional non-target cells without penalty, which is more realistic than
-exact-match fitness because organisms explore nearby regions during learning
-trials. For simple tasks $|T|$ is the single pattern's cell count (13, 12, or
-15); for compositional tasks it is the union of both patterns (25, 27, or 28
-cells depending on the task).
+where $P$ is the set of cells the organism occupies, $T$ the target pattern,
+and $P_{\Delta x,\Delta y}$ the organism's cell set shifted by
+$(\Delta x,\Delta y)$. IoU penalises cells the organism occupies outside the
+target, so extra activity is not free on simple tasks. For
+\emph{compositional} tasks, fitness is the mean of two independent recall
+searches, one per component pattern, each over a wider $\pm7$-cell window,
+\begin{equation}
+\mathrm{Fitness}_{\mathrm{comp}} \;=\; \tfrac{1}{2}\left(
+\max_{\Delta\,\in\,[-7,7]^2} \frac{|P_{\Delta} \cap T_1|}{|T_1|} \;+\;
+\max_{\Delta\,\in\,[-7,7]^2} \frac{|P_{\Delta} \cap T_2|}{|T_2|} \right),
+\end{equation}
+where $T_1$ and $T_2$ are the two component patterns, each searched for
+independently, anywhere in the organism's grid. Recall does not penalise
+extra cells, so an organism may express both components without one
+interfering with the other; this is where preadaptation (occupying cells
+beyond what either component strictly requires) is free. The same is not
+true on simple tasks, where the fitness metric is IoU.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{fig1_task_environment.png}
-\caption{\textbf{Task environment and fitness calculation.}
-Top row: (A1) L pattern (13 cells), (A2) T pattern (12 cells), (A3) Plus pattern
-(15 cells) with individual grid squares visible for cell counting, (A4) pattern
-description. Bottom row: (B) simple task---L alone, showing the target pattern
-with 13 cells to match. (C1--C2) Compositional L+T task: left shows the target
-union (25 cells), right shows an organism's response with 24 cells matched (one
-cell missed at row 3, column 4), giving fitness $= 24/25 = 96\%$. (D) Fitness
-calculation, plus component fitness (L: 13/13, T: 11/12).}
+\caption{\textbf{Task environment and fitness calculation.} Top row: (A) L
+pattern, (B) T pattern, (C) Plus pattern --- each occupying 5 fixed cells on
+the $10\times10$ grid. Bottom row, left: a worked simple-task example. The
+organism's grid (the L pattern shifted, plus one stray off-target cell) is
+compared against the L pattern under translation-invariant IoU (search range
+$\pm5$); the best alignment gives fitness $=83.3\%$ --- the stray cell lowers
+the score, since IoU (unlike recall) penalises extra cells. Bottom row,
+right: a worked compositional-task (L+T) example. The organism expresses a
+complete T pattern (recall $=100\%$) and 4 of the 5 L cells (recall
+$=80\%$), each found independently via translation-invariant search
+($\pm7$); fitness is their mean, $90\%$. All patterns and scores in this
+figure are computed directly from the project's \texttt{environment.py} and
+\texttt{metrics.py}.}
 \label{fig:task}
 \end{figure}
 
 \subsection{Evolutionary algorithms}
 
 We implement three algorithms representing different inheritance mechanisms.
+Each organism carries a 100-bit genome, parsed as twenty 5-bit instructions;
+each instruction is read as two unsigned sub-fields that select a drawing
+primitive (2 bits, taken modulo the size of a 9-primitive library -- two
+lines, four corner pieces, and three junctions; since a 2-bit field cannot
+exceed 3, only the first four primitives, line and corner pieces, are
+reachable through the genome) and a grid position at which to stamp it
+(2 bits for $x$ and 1 bit for $y$, each taken modulo the grid dimension, so
+$x\in\{0,1,2,3\}$ and $y\in\{0,1\}$ in practice). An organism's
+genetically-coded phenotype is the union of all 20 stamped primitives.
 Genetic algorithms (GAs) simulate evolution by encoding candidate solutions as
 bit-string genomes that undergo reproduction, mutation, and fitness-based
-selection \citep{Holland1975,Goldberg1989}. We use the GA as the computational
-model of the gene-centric Modern Synthesis view: only genetic information is
-heritable, learning does not influence inheritance, and evolution proceeds
-solely through genetic variation and selection. We then extend this framework to
-test two alternative inheritance mechanisms.
+selection \citep{Holland1975,Goldberg1989}; we use this generative GA as the
+computational model of the gene-centric Modern Synthesis view: only genetic
+information is heritable, and evolution proceeds solely through genetic
+variation and selection. We then extend this framework to test two
+alternative inheritance mechanisms.
 
 \paragraph{Gene-Centric GA (baseline).}
-Pure gene-centric evolution. Organisms are 100-bit binary genomes; each bit
-determines whether the corresponding grid cell is activated in the phenotype.
-Fitness is evaluated directly on the resulting phenotype. Reproduction uses
-tournament selection (size 3), single-point crossover (50\% probability), and
-bit-flip mutation (2\% per bit per generation). No learning occurs---organisms
-cannot modify their phenotypes during their lifetime. This baseline establishes
-that learning is necessary for these tasks.
+Pure gene-centric evolution: the phenotype above, fitness-evaluated directly,
+with no lifetime modification. Reproduction is asexual (one parent per
+offspring, chosen by tournament selection of size 3, with no crossover), with
+the top 10\% of the population carried over unmutated each generation
+(elitism) and bit-flip mutation (2\% per bit per generation) applied to the
+rest. This baseline establishes that learning is necessary for these tasks,
+and that the restricted reach of the genomic encoding itself (only 4 of 9
+primitives, confined to the grid's top-left corner) makes a purely genomic
+solution hard to find without learning or a translation search wide enough to
+compensate.
 
 \paragraph{Baldwin Effect.}
-Identical genome representation, plus lifetime learning. Each organism undergoes
-20 learning trials: in each trial 30\% of grid cells are randomly selected for
-potential activation, the resulting phenotype's fitness is evaluated, and
-changes are kept if fitness improved and discarded otherwise. After 20 trials
-the best learned phenotype is retained. Critically, learned modifications are
-\textbf{not} inherited: offspring receive their parent's genome plus mutations
-but start with an empty learned state. Learning influences \emph{which}
-organisms reproduce, but the learned knowledge itself does not transfer. Each
-generation must rediscover learned solutions independently.
+Identical genome, development, and reproduction, plus lifetime learning. Each
+organism runs 20 learning trials: each trial builds a fresh candidate
+phenotype from scratch by stamping 1--4 randomly chosen primitives (drawn
+from the full 9-primitive library, unlike the genomic encoding) at random
+grid positions, and the candidate replaces the organism's phenotype only if
+its fitness exceeds the current best. Critically, whatever is discovered
+during learning is \textbf{not} inherited: offspring are built from the
+parent's genome plus mutation only, with no memory of what the parent
+learned. Learning influences \emph{which} organisms reproduce, via its effect
+on fitness and hence selection, but the learned configuration itself does not
+transfer. Each generation must rediscover a good configuration independently.
 
 \paragraph{Phenotype-First (Phenopoiesis).}
-Direct epigenomic write-back, where learned patterns \emph{are} inherited. Each
-organism maintains two independent heritable layers: a genetic layer (100 bits,
-inherited with mutation) and an epigenetic layer (100 bits, inherited without
-modification). The phenotype is the union of both layers---a cell activated in
-either layer is expressed. At birth an organism has a random genetic genome and
-an empty epigenome. During learning (20 trials, identical mechanism to Baldwin),
-activated cells are recorded in the \emph{epigenetic} layer, not the genetic
-layer. Offspring inherit \emph{both} layers: a mutated copy of the parent's
-genome (2\% bit-flip) \emph{and} a complete, unmutated copy of the parent's
-learned epigenome at 100\% fidelity. Learning therefore modifies the inheritable
-epigenome, and learned patterns persist in offspring without requiring genetic
-change or slow genetic assimilation. Figure~\ref{fig:pipeline} summarises the
-three mechanisms side by side.
+Identical genome, development, reproduction, and learning procedure to the
+Baldwin Effect, plus one addition: whenever a learning trial discovers a
+configuration scoring above 0.7 fitness, that configuration is appended to
+the organism's \emph{epigenome} -- a growing list of learned patterns. Unlike
+the genome, the epigenome is inherited by offspring in full and unmutated: a
+child starts life with an exact copy of its parent's entire list of learned
+patterns, in addition to whatever its own genome and lifetime learning add to
+it. Before finalising its phenotype each generation, an organism also tries
+every pairwise union of its inherited patterns and adopts the best-scoring
+combination if it beats its current phenotype -- this is the mechanism that
+lets, for example, an inherited L pattern and an inherited T pattern combine
+into an L+T phenotype without relearning either component from scratch.
+Figure~\ref{fig:pipeline} summarises the three mechanisms side by side.
 
 \begin{figure}[htbp]
 \centering
@@ -331,13 +366,14 @@ Table~\ref{tab:params}.
 \textbf{Parameter} & \textbf{Gene-Centric} & \textbf{Baldwin} & \textbf{Phenopoiesis} \\
 \midrule
 Genome size      & 100 bits & 100 bits & 100 bits (genetic) \\
-Epigenome size   & --- & --- & 100 bits (inheritable) \\
+Epigenome size   & --- & --- & growing pattern list (inheritable) \\
 Learning trials  & none & 20 & 20 (genetic layer fixed) \\
-Learning rule    & --- & random 30\% activation & random 30\% activation \\
-Inheritance      & genome + mutation & genome + mutation (learning reset) & genome + mutation + epigenome (100\% fidelity) \\
+Learning rule    & --- & fresh random 1--4-primitive composition & fresh random 1--4-primitive composition \\
+Inheritance      & genome + mutation & genome + mutation (learning reset) & genome + mutation + pattern list (100\% fidelity) \\
 Selection        & tournament (size 3) & tournament (size 3) & tournament (size 3) \\
 Mutation rate    & 2\% per bit & 2\% per bit & 2\% per bit (genome only) \\
-Crossover        & single-point, 50\% & single-point, 50\% & single-point, 50\% \\
+Crossover        & none (asexual) & none (asexual) & none (asexual) \\
+Elitism          & top 10\% & top 10\% & top 10\% \\
 Population       & 50 & 50 & 50 \\
 Generations      & 150 & 150 & 150 \\
 Replicates       & 30 & 30 & 30 \\
@@ -587,7 +623,7 @@ relying solely on genetic evolution and selection.
 
 All data, code, and figures are available at
 \begin{center}
-\url{https://github.com/drartificialife/phenotype-first-evolution}
+\url{https://github.com/drnamlabs-gif/phenotype-first-evolution}
 \end{center}
 \noindent
 The repository contains the complete Python implementation of all three
