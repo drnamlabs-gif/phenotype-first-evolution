@@ -1,4 +1,4 @@
-\begin{thebibliography}{24}
+\begin{thebibliography}{22}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -28,21 +28,10 @@ Eileen~R. Gibney and Catherine~M. Nolan.
 \newblock Epigenetics and gene expression.
 \newblock \emph{Heredity}, 105:\penalty0 4--13, 2010.
 
-\bibitem[Goldberg(1989)]{Goldberg1989}
-David~E. Goldberg.
-\newblock \emph{Genetic Algorithms in Search, Optimization, and Machine
-  Learning}.
-\newblock Addison-Wesley, Reading, MA, 1989.
-
 \bibitem[Hinton and Nowlan(1987)]{HintonNowlan1987}
 Geoffrey~E. Hinton and Steven~J. Nowlan.
 \newblock How learning can guide evolution.
 \newblock \emph{Complex Systems}, 1:\penalty0 495--502, 1987.
-
-\bibitem[Holland(1975)]{Holland1975}
-John~H. Holland.
-\newblock \emph{Adaptation in Natural and Artificial Systems}.
-\newblock University of Michigan Press, Ann Arbor, MI, 1975.
 
 \bibitem[Huxley(1942)]{Huxley1942}
 Julian~S. Huxley.

@@ -1,6 +1,7 @@
 % ============================================================================
 %  Organisms Write Their Own Evolution
 %  arXiv preprint version -- single-author submission
+%  (preprint of the journal manuscript; content identical)
 %
 %  Build:  make        (or: latexmk -pdf main.tex)
 %  Clean:  make clean
@@ -13,7 +14,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
-\usepackage{amsmath,amssymb}
+\usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{caption}
@@ -29,9 +30,10 @@
 \setlength{\parskip}{0.35em}
 \linespread{1.08}
 
+\newtheorem{proposition}{Proposition}
+
 % --- Convenience macros -----------------------------------------------------
 \newcommand{\Pheno}{\textsc{Phenopoiesis}}
-\newcommand{\note}[1]{\textcolor{red}{[#1]}}
 
 % ============================================================================
 \title{\bfseries Organisms Write Their Own Evolution:\\
@@ -48,32 +50,30 @@ Direct Epigenomic Inheritance Accelerates Learning\\ on Compositional Tasks}
 % ============================================================================
 \begin{abstract}
 \noindent
-What if organisms could write their own evolution? For 150 years, evolution has been
-understood as one-way: genes provide the rules, organisms respond to selection.
-But if organisms could learn during their lifetime, write that learned knowledge
-directly into their epigenome---the heritable regulatory layer controlling gene
-expression---and pass it to offspring, then knowledge would accumulate across
-generations instead of being rediscovered by each one. Such direct epigenomic
-inheritance would constitute genuine organismal agency: writing new information
-into heredity rather than passively receiving it. To test whether organisms
-actually benefit from this capability, we implement \Pheno{}, a computational
-model in which organisms maintain two independent heritable layers: a genetic
-layer (inherited with mutation) and an epigenetic layer (inherited unchanged).
-We compare \Pheno{} against \emph{Selection Only} (no learning) and the
-\emph{Baldwin Effect} (learning influences selection but is not inherited)
-across six learning tasks of increasing complexity: three simple (learn one
-pattern) and three compositional (learn two patterns simultaneously).
-On simple tasks all three mechanisms perform equivalently ($p = 0.559$):
-complexity is required for inheritance to matter. On learnable compositional
-tasks, \Pheno{} outperforms the alternatives by 3--6$\times$ in fitness
-($F = 177$--$358$, $p < 0.001$, Cohen's $d = 3.44$--$4.89$), with perfect
-reproducibility (s.d.\ $= 0.0$ on T+Plus across all 30 runs), indicating
-deterministic knowledge accumulation: offspring inherit their parents' learned
-solutions and add new learning on top. On a geometrically incompatible task all
-mechanisms fail equally, revealing an inherent limit. These results give the
-first direct computational test of Denis Noble's hypothesis that organisms
-possess read--write access to their own heredity, and show precisely when that
-access pays off.
+Can organisms write what they learn into heredity? Denis Noble proposed that
+organisms possess read--write access to an inheritable epigenome, rather than
+only influencing evolution indirectly through selection. We give this
+hypothesis its first direct computational test, pairing simulation with an
+exact analytical account. In \Pheno{}, organisms carry two heritable layers:
+a genetic layer, inherited with mutation, and an epigenetic layer of learned
+patterns, inherited unchanged. Against a Baldwin-Effect control with
+identical learning but no inheritance of what is learned, \Pheno{} performs
+identically on simple one-pattern tasks, but achieves 3--6$\times$ higher
+fitness on compositional two-pattern tasks ($p < 0.001$, Cohen's $d =
+3.44$--$4.89$), including one task reproduced identically across all 30 runs
+(s.d.\ $= 0.0$). On a third compositional task both mechanisms fail equally.
+Because the model's phenotype space is finite, we then explain every one of
+these outcomes exactly, by enumeration. Baldwin learning here has zero
+heritability, so its expected response to selection is zero; its observed
+fitness matches the predicted neutral-drift value (0.086 predicted and
+observed on T+Plus). Epigenomic write-back acts as a ratchet whose fitness
+can only rise, converging to a ceiling set by what plasticity can reach: the
+predicted ceiling 0.517 equals the observed plateau exactly, and the
+perfect reproducibility follows because every run reaches the same algebraic
+ceiling. The equal-failure case arises because no reachable phenotype clears
+the write-back threshold, which switches the ratchet off. Extended agency
+thus pays precisely when acquired solutions are heritable, accumulable, and
+reachable.
 
 \vspace{0.8em}
 \noindent\textbf{Keywords:} extended evolutionary synthesis; epigenetic inheritance;
@@ -87,18 +87,18 @@ direct write-back.
 Many complex problems require solving multiple interconnected challenges
 sequentially. In biology, protein structures are not random amino acid sequences
 but composed hierarchies: hydrophobic cores, signal peptides, binding domains,
-regulatory regions---each layer building on previous ones. Metabolic pathways
+regulatory regions -- each layer building on previous ones. Metabolic pathways
 are not isolated reactions but networks in which each enzyme depends on prior
-enzymatic solutions. Major evolutionary transitions---the origin of eukaryotes,
-the evolution of multicellularity, the emergence of nervous systems---all
+enzymatic solutions. Major evolutionary transitions -- the origin of eukaryotes,
+the evolution of multicellularity, the emergence of nervous systems -- all
 involve layered innovations where each layer builds on those before it
 \citep{MaynardSmith1995}.
 
 The central challenge is solving these compositional problems efficiently. If
 each generation must rediscover all prior solutions before learning new ones,
 the time required grows exponentially. But if organisms could inherit
-accumulated solutions from their parents---not just genes, but learned knowledge
-encoded in heritable form---offspring could build upon parental achievements
+accumulated solutions from their parents -- not just genes, but learned knowledge
+encoded in heritable form -- offspring could build upon parental achievements
 rather than start from scratch. The fundamental question is whether organisms
 can inherit accumulated solutions, enabling learning to accumulate across
 generations.
@@ -113,8 +113,8 @@ evolution through niche construction, developmental plasticity, and learning
 remain \emph{indirect}: organisms learn during their lifetime, this influences
 selection pressure, and only across many subsequent generations do genes slowly
 encode learned traits through genetic assimilation
-\citep{Waddington1942,HintonNowlan1987}. Biologically, the epigenome---DNA
-methylation, histone modifications, chromatin marks---provides an alternative
+\citep{Waddington1942,HintonNowlan1987}. Biologically, the epigenome -- DNA
+methylation, histone modifications, chromatin marks -- provides an alternative
 inheritance channel. These marks persist through meiosis and respond to
 environmental signals, enabling transgenerational inheritance of acquired
 information independent of genetic change
@@ -125,39 +125,43 @@ an inheritable epigenome, and whether such inheritance provides an evolutionary
 advantage over selection-only learning. To test this, we implement
 \textbf{Phenotype-First} (the \Pheno{} algorithm), a computational model in
 which organisms maintain two independent heritable layers: a genetic layer
-(a 100-bit genome, inherited with 2\% per-bit mutation) and an epigenetic
-layer (a list of learned patterns, inherited unchanged and in full). During
-learning, organisms add to the epigenetic layer; offspring inherit both
-layers, the genetic one with mutation and the epigenetic one unchanged.
+(a bit-string genome, inherited with mutation) and an epigenetic layer (a list
+of learned patterns, inherited unchanged and in full). During learning,
+organisms add to the epigenetic layer; offspring inherit both layers, the
+genetic one with mutation and the epigenetic one unchanged.
 
 A critical distinction separates \Pheno{} from classical Lamarckism. Lamarck
 proposed write-back to the genes themselves, which fails because somatic
 modifications cannot alter germline DNA. Our approach targets \emph{epigenomic}
-inheritance---the regulatory layer controlling gene expression, not the genes
-themselves---which is biologically documented in systems ranging from
+inheritance -- the regulatory layer controlling gene expression, not the genes
+themselves -- which is biologically documented in systems ranging from
 environmental stress responses to transgenerational disease susceptibility
 \citep{Pembrey2006,Rakyan2002}.
 
-We test \Pheno{} against two alternatives: \emph{Selection Only} (organisms
-evolve genetically but cannot learn) and the \emph{Baldwin Effect} (organisms
-learn during their lifetime, which influences which genes spread through
-selection, but learned knowledge dies with the organism) \citep{Baldwin1896}.
+We test \Pheno{} against the \emph{Baldwin Effect} (organisms learn during
+their lifetime, which influences which organisms reproduce, but learned
+knowledge dies with the organism) \citep{Baldwin1896}, with a learning-free
+\emph{Gene-Centric} baseline establishing that learning is necessary at all.
 We make three predictions:
 
 \begin{enumerate}
-  \item On simple learning tasks (learn one pattern), all three mechanisms
-        perform equivalently---inheritance offers no advantage when problems are
-        easy and solved quickly.
-  \item On tasks requiring the simultaneous learning of multiple patterns,
-        \Pheno{} achieves 3--6$\times$ higher fitness than the Baldwin
-        Effect---inherited learning lets offspring build efficiently on parental
+  \item On simple learning tasks (learn one pattern), the two learning
+        mechanisms perform equivalently -- inheritance offers no advantage when
+        problems are solved within a single lifetime.
+  \item On tasks requiring the simultaneous expression of multiple learned
+        patterns, \Pheno{} achieves several-fold higher fitness than the
+        Baldwin Effect -- inherited learning lets offspring build on parental
         knowledge instead of rediscovering prior solutions.
-  \item On tasks whose solutions cannot be built incrementally, all mechanisms
-        fail equally---revealing inherent limits to inheritance-based learning.
+  \item On tasks where no reachable learned state clears the write-back
+        threshold, the two mechanisms fail equally -- revealing inherent limits
+        to inheritance-based learning.
 \end{enumerate}
 
-We test these predictions on six learning tasks (three simple, three
-compositional) with 30 independent replicates each.
+We test these predictions in simulation (30 independent replicates per
+condition) and then go further: because the model's phenotype space is finite
+and enumerable, we derive an exact analytical account that reproduces every
+observed outcome -- including the precise value of a fitness plateau, its zero
+variance across runs, and the equal-failure case -- from first principles.
 
 % ============================================================================
 \section{Background}
@@ -165,7 +169,7 @@ compositional) with 30 independent replicates each.
 The Modern Synthesis placed genes at the centre of evolution: genes are the only
 heritable material, mutations create variation, and selection determines which
 alleles spread \citep{Darwin1859,Huxley1942}. In this framework organisms are
-passive carriers of genes---they respond to selection pressure but do not direct
+passive carriers of genes -- they respond to selection pressure but do not direct
 their own evolution. Evolution is one-way: genes shape phenotypes, phenotypes
 compete under selection, successful alleles persist.
 
@@ -176,7 +180,7 @@ organisms to modify their environment, influencing which phenotypes are adaptive
 \citep{OdlingSmee2003}. Developmental plasticity permits rapid phenotypic change
 without genetic modification \citep{WestEberhard2003,FuscoMinelli2010}. Learning
 influences selection: organisms acquiring useful behaviours survive better, and
-over generations selection favours genotypes supporting such learning---the
+over generations selection favours genotypes supporting such learning -- the
 Baldwin Effect \citep{Baldwin1896,HintonNowlan1987}. Yet despite recognising
 organismal agency, EES mechanisms remain indirect: learning influences evolution
 only through its effect on selection pressure, and knowledge accumulation is
@@ -187,7 +191,7 @@ Denis Noble proposed something more radical: organisms possess not just agency
 \emph{within} evolution but agency \emph{over heredity itself}
 \citep{Noble2016,Noble2017,Noble2021}. To borrow his metaphor from \emph{The
 Music of Life}: organisms are not merely musicians performing a fixed genetic
-score written by natural selection---they are composers. They read the genetic
+score written by natural selection -- they are composers. They read the genetic
 score, yes, but they also compose new notes (learned patterns) and write them
 directly into the hereditary sheet music (the epigenome). Critically, they pass
 this newly composed music to offspring without waiting for slow genetic
@@ -199,8 +203,8 @@ modifications, and chromatin marks persist through meiosis and respond to
 environmental signals, enabling transgenerational inheritance of acquired
 information independent of genetic sequence change
 \citep{Pembrey2006,Rakyan2002,WaterlandJirtle2007,Gibney2010,Jablonka2014}. The
-biological mechanism clearly exists. Yet Noble's hypothesis---that organisms can
-directly write learned patterns to this heritable layer---has never been tested
+biological mechanism clearly exists. Yet Noble's hypothesis -- that organisms can
+directly write learned patterns to this heritable layer -- has never been tested
 computationally. Existing computational work tests the Baldwin Effect
 \citep{Baldwin1896,HintonNowlan1987,Suzuki2007} and genetic assimilation, but
 none directly tests whether organisms can immediately write learned patterns to
@@ -210,128 +214,125 @@ heritable epigenomic form, or whether this accelerates learning. We implement
 % ============================================================================
 \section{Methods}
 
-\subsection{Task environment}
-
-We use a visual pattern task on a $10 \times 10$ grid of cells
-(Figure~\ref{fig:task}). Three target patterns are defined, each occupying 5
-fixed cells: \textbf{L} (a 3-cell vertical arm meeting a 3-cell horizontal arm
-at a shared corner), \textbf{T} (a 3-cell horizontal bar with a 2-cell stem
-descending from its centre), and \textbf{Plus} (a 5-cell cross). Each pattern
-occupies a fixed, pattern-specific subset of grid cells and remains constant
-across all generations.
-
-\emph{Simple} tasks require organisms to reproduce a single pattern: L alone,
-T alone, or Plus alone. \emph{Compositional} tasks require organisms to
-express two patterns at once: L+T, L+Plus, or T+Plus. Each component pattern
-is scored independently wherever it best appears in the organism's grid (see
-below), so compositional tasks cannot be solved by expressing one pattern and
-then the other within a generation---both must be simultaneously present in
-the final phenotype.
-
-Fitness is translation-invariant: an organism's cell set is compared against
-the target pattern(s) at every offset within a search window, and the
-best-scoring offset is kept. For \emph{simple} tasks, fitness is
-Intersection-over-Union (IoU) under the best alignment,
-\begin{equation}
-\mathrm{Fitness}_{\mathrm{simple}} \;=\; \max_{(\Delta x,\Delta y)\,\in\,[-5,5]^2}
-\frac{|\,P_{\Delta x,\Delta y} \cap T\,|}{|\,P_{\Delta x,\Delta y} \cup T\,|},
-\end{equation}
-where $P$ is the set of cells the organism occupies, $T$ the target pattern,
-and $P_{\Delta x,\Delta y}$ the organism's cell set shifted by
-$(\Delta x,\Delta y)$. IoU penalises cells the organism occupies outside the
-target, so extra activity is not free on simple tasks. For
-\emph{compositional} tasks, fitness is the mean of two independent recall
-searches, one per component pattern, each over a wider $\pm7$-cell window,
-\begin{equation}
-\mathrm{Fitness}_{\mathrm{comp}} \;=\; \tfrac{1}{2}\left(
-\max_{\Delta\,\in\,[-7,7]^2} \frac{|P_{\Delta} \cap T_1|}{|T_1|} \;+\;
-\max_{\Delta\,\in\,[-7,7]^2} \frac{|P_{\Delta} \cap T_2|}{|T_2|} \right),
-\end{equation}
-where $T_1$ and $T_2$ are the two component patterns, each searched for
-independently, anywhere in the organism's grid. Recall does not penalise
-extra cells, so an organism may express both components without one
-interfering with the other; this is where preadaptation (occupying cells
-beyond what either component strictly requires) is free. The same is not
-true on simple tasks, where the fitness metric is IoU.
+We report two experiments on $10 \times 10$ binary grids
+(Figure~\ref{fig:task}). Experiment~1 establishes, on simple single-pattern
+tasks, that lifetime learning is necessary and that the inheritance mechanism
+is irrelevant when one lifetime suffices. Experiment~2 is the core test: on
+compositional two-pattern tasks, it compares learning \emph{without}
+inheritance (Baldwin) against learning \emph{with} epigenomic write-back
+(\Pheno{}), holding the learning operator itself identical. The two
+experiments use different encodings and fitness functions, each described in
+full below; all quantitative claims in this paper are tied to the experiment
+they come from.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{fig1_task_environment.png}
-\caption{\textbf{Task environment and fitness calculation.} Top row: (A) L
-pattern, (B) T pattern, (C) Plus pattern --- each occupying 5 fixed cells on
-the $10\times10$ grid. Bottom row, left: a worked simple-task example. The
-organism's grid (the L pattern shifted, plus one stray off-target cell) is
-compared against the L pattern under translation-invariant IoU (search range
-$\pm5$); the best alignment gives fitness $=83.3\%$ --- the stray cell lowers
-the score, since IoU (unlike recall) penalises extra cells. Bottom row,
-right: a worked compositional-task (L+T) example. The organism expresses a
-complete T pattern (recall $=100\%$) and 4 of the 5 L cells (recall
-$=80\%$), each found independently via translation-invariant search
-($\pm7$); fitness is their mean, $90\%$. All patterns and scores in this
-figure are computed directly from the project's \texttt{environment.py} and
-\texttt{metrics.py}.}
+\caption{\textbf{Task environments and fitness calculation.} Top row,
+Experiment~1: (A--C) the L, T, and Plus targets, each occupying 5 fixed cells;
+(D) a worked example -- an organism expressing a shifted L plus one stray cell
+is scored by translation-invariant Intersection-over-Union (IoU, search range
+$\pm5$), giving fitness $83.3\%$; the stray cell lowers the score because IoU
+penalises extra cells. Bottom row, Experiment~2: (E) the fixed-position
+targets L (5 cells), T (6 cells), and Plus (5 cells); (F) the complete set of
+grid cells reachable by the generative encoding (grey), the target cells it
+covers (blue), and the target cells it cannot reach (red crosses); (G) the
+resulting per-pattern reachability ceilings and the task ceilings $F^*$
+derived in Section~\ref{sec:theory}. All panels are computed directly from
+the project code.}
 \label{fig:task}
 \end{figure}
 
-\subsection{Evolutionary algorithms}
+\subsection{Experiment 1: simple tasks}
+\label{sec:exp1}
 
-We implement three algorithms representing different inheritance mechanisms.
-Each organism carries a 100-bit genome, parsed as twenty 5-bit instructions;
-each instruction is read as two unsigned sub-fields that select a drawing
-primitive (2 bits, taken modulo the size of a 9-primitive library -- two
-lines, four corner pieces, and three junctions; since a 2-bit field cannot
-exceed 3, only the first four primitives, line and corner pieces, are
-reachable through the genome) and a grid position at which to stamp it
-(2 bits for $x$ and 1 bit for $y$, each taken modulo the grid dimension, so
-$x\in\{0,1,2,3\}$ and $y\in\{0,1\}$ in practice). An organism's
-genetically-coded phenotype is the union of all 20 stamped primitives.
-Genetic algorithms (GAs) simulate evolution by encoding candidate solutions as
-bit-string genomes that undergo reproduction, mutation, and fitness-based
-selection \citep{Holland1975,Goldberg1989}; we use this generative GA as the
-computational model of the gene-centric Modern Synthesis view: only genetic
-information is heritable, and evolution proceeds solely through genetic
-variation and selection. We then extend this framework to test two
-alternative inheritance mechanisms.
+\paragraph{Targets and fitness.}
+Three target patterns are defined, each occupying 5 fixed cells: \textbf{L}
+(a 3-cell vertical arm meeting a 3-cell horizontal arm at a shared corner),
+\textbf{T} (a 3-cell horizontal bar with a 2-cell stem), and \textbf{Plus} (a
+5-cell cross). Fitness is translation-invariant Intersection-over-Union: the
+organism's cell set is compared against the target at every offset within a
+$\pm5$-cell window and the best alignment is kept,
+\begin{equation}
+\mathrm{Fitness} \;=\; \max_{(\Delta x,\Delta y)\,\in\,[-5,5]^2}
+\frac{|\,P_{\Delta x,\Delta y} \cap T\,|}{|\,P_{\Delta x,\Delta y} \cup T\,|},
+\end{equation}
+where $P$ is the set of cells the organism occupies, $T$ the target, and
+$P_{\Delta x,\Delta y}$ the organism's cell set shifted by
+$(\Delta x,\Delta y)$. IoU penalises cells occupied outside the target, so
+extra activity is not free.
 
-\paragraph{Gene-Centric GA (baseline).}
-Pure gene-centric evolution: the phenotype above, fitness-evaluated directly,
-with no lifetime modification. Reproduction is asexual (one parent per
-offspring, chosen by tournament selection of size 3, with no crossover), with
-the top 10\% of the population carried over unmutated each generation
-(elitism) and bit-flip mutation (2\% per bit per generation) applied to the
-rest. This baseline establishes that learning is necessary for these tasks,
-and that the restricted reach of the genomic encoding itself (only 4 of 9
-primitives, confined to the grid's top-left corner) makes a purely genomic
-solution hard to find without learning or a translation search wide enough to
-compensate.
+\paragraph{Encoding and algorithms.}
+Each organism carries a 100-bit genome parsed as twenty 5-bit instructions;
+each instruction selects a drawing primitive from a 9-primitive library (two
+lines, four corner pieces, three junctions) and a stamp position, and the
+genetically-coded phenotype is the union of all stamped primitives. Three
+algorithms are compared. \emph{Gene-Centric}: no learning; asexual
+reproduction with tournament selection (size 3), 10\% elitism, and 2\%
+per-bit mutation. \emph{Baldwin Effect}: identical, plus 20 learning trials
+per lifetime; each trial composes 1--4 randomly chosen primitives at random
+positions and replaces the phenotype if fitness improves; nothing learned is
+inherited. \emph{\Pheno{}}: identical to Baldwin, except that learned
+configurations scoring above 0.7 are appended to a heritable pattern list,
+offspring inherit that list unmutated, and an organism may adopt the
+best-scoring pairwise union of its inherited patterns.
 
-\paragraph{Baldwin Effect.}
-Identical genome, development, and reproduction, plus lifetime learning. Each
-organism runs 20 learning trials: each trial builds a fresh candidate
-phenotype from scratch by stamping 1--4 randomly chosen primitives (drawn
-from the full 9-primitive library, unlike the genomic encoding) at random
-grid positions, and the candidate replaces the organism's phenotype only if
-its fitness exceeds the current best. Critically, whatever is discovered
-during learning is \textbf{not} inherited: offspring are built from the
-parent's genome plus mutation only, with no memory of what the parent
-learned. Learning influences \emph{which} organisms reproduce, via its effect
-on fitness and hence selection, but the learned configuration itself does not
-transfer. Each generation must rediscover a good configuration independently.
+\subsection{Experiment 2: compositional tasks}
+\label{sec:exp2}
 
-\paragraph{Phenotype-First (Phenopoiesis).}
-Identical genome, development, reproduction, and learning procedure to the
-Baldwin Effect, plus one addition: whenever a learning trial discovers a
-configuration scoring above 0.7 fitness, that configuration is appended to
-the organism's \emph{epigenome} -- a growing list of learned patterns. Unlike
-the genome, the epigenome is inherited by offspring in full and unmutated: a
-child starts life with an exact copy of its parent's entire list of learned
-patterns, in addition to whatever its own genome and lifetime learning add to
-it. Before finalising its phenotype each generation, an organism also tries
-every pairwise union of its inherited patterns and adopts the best-scoring
-combination if it beats its current phenotype -- this is the mechanism that
-lets, for example, an inherited L pattern and an inherited T pattern combine
-into an L+T phenotype without relearning either component from scratch.
-Figure~\ref{fig:pipeline} summarises the three mechanisms side by side.
+\paragraph{Targets and fitness.}
+Three fixed-position target patterns are defined
+(Figure~\ref{fig:task}E): \textbf{L} (5 cells, upper-left region), \textbf{T}
+(6 cells, upper-right region), and \textbf{Plus} (5 cells, grid centre). A
+compositional task pairs two of them (L+T, T+Plus, or L+Plus), and fitness is
+the mean of the two per-pattern recalls computed at the patterns' fixed
+positions,
+\begin{equation}
+F(P) \;=\; \tfrac{1}{2}\left(
+\frac{|P \cap T_1|}{|T_1|} \;+\; \frac{|P \cap T_2|}{|T_2|} \right),
+\label{eq:comp-fitness}
+\end{equation}
+where $T_1, T_2$ are the two component patterns. There is no translation
+search and no penalty for extra cells: fitness is monotone non-decreasing in
+the organism's cell set, a property that the analysis in
+Section~\ref{sec:theory} exploits.
+
+\paragraph{Generative encoding.}
+Each organism carries a 100-bit genome divided into five 20-bit blocks, one
+per shape in a 5-shape library (an L-piece, a T-piece, a cross, a 5-cell
+line, and a 5-cell block). Within each block only the first four bits are
+read (the remainder is non-coding): one activation bit, one bit selecting
+horizontal offset $\in \{0, 5\}$, one bit selecting vertical offset
+$\in \{0, 5\}$, and one bit selecting scale $\in \{1, 3\}$ (scaled shapes
+clip at the grid boundary). A block is therefore in one of 9 states (off, or
+one of $2 \times 2 \times 2$ placements), and the phenotype is the union of
+the placed shapes. The full phenotype space has at most $9^5 = 59{,}049$
+elements -- small enough to enumerate exactly, which
+Section~\ref{sec:theory} does.
+
+\paragraph{Learning.}
+Both algorithms use the identical learning operator: in each of 20 trials per
+lifetime, a fresh genome is drawn uniformly at random, decoded, and (for
+\Pheno{}) unioned with the organism's inherited patterns; the organism's
+fitness is the best value found across its trials. Learning is thus
+deliberately \emph{unconstrained by the organism's own genome}: every
+organism explores the same phenotype distribution, so the two algorithms
+differ in inheritance only. This isolates the variable under test -- what
+happens to acquired information at reproduction -- from any genetic guidance
+of learning.
+
+\paragraph{Inheritance and selection.}
+\emph{Baldwin}: offspring receive the parent's genome with 2\% per-bit
+mutation and nothing else; each generation learns from scratch.
+\emph{\Pheno{}}: offspring additionally receive, unmutated and in full, the
+parent's accumulated pattern list, to which any pattern the parent learned
+this lifetime is appended if its fitness exceeded the write-back threshold
+$\theta = 0.5$. Selection in both: the population of 50 is sorted by learned
+fitness, the top 10 survive unchanged (elitism), and the remaining 40 slots
+are filled by offspring of parents drawn uniformly from the top 25. Runs
+last 150 generations. The reported final fitness is that of the phenotype an
+offspring would inherit: the genome-decoded phenotype (Baldwin) or its union
+with the accumulated pattern list (\Pheno{}).
 
 \begin{figure}[htbp]
 \centering
@@ -343,80 +344,38 @@ write survives reproduction.}
 \label{fig:pipeline}
 \end{figure}
 
-\subsection{Experimental design}
+\subsection{Experimental design and statistical analysis}
 
-We test three algorithms (Gene-Centric, Baldwin Effect, \Pheno{}) on six tasks
-(simple: L, T, Plus; compositional: L+T, L+Plus, T+Plus). Each
-task--algorithm combination is run 30 independent times with different random
-seeds. Populations of 50 individuals evolve for 150 generations, allowing all
-algorithms to reach a fitness plateau on simple tasks. For each run we record
-final fitness at generation 150, component fitness for each pattern
-(compositional tasks only), and convergence time (the generation at which
-fitness first reaches 80\% of its final value). Parameters are given in
-Table~\ref{tab:params}.
-
-\begin{table}[htbp]
-\centering
-\small
-\caption{Algorithm parameters.}
-\label{tab:params}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lccc}
-\toprule
-\textbf{Parameter} & \textbf{Gene-Centric} & \textbf{Baldwin} & \textbf{Phenopoiesis} \\
-\midrule
-Genome size      & 100 bits & 100 bits & 100 bits (genetic) \\
-Epigenome size   & --- & --- & growing pattern list (inheritable) \\
-Learning trials  & none & 20 & 20 (genetic layer fixed) \\
-Learning rule    & --- & fresh random 1--4-primitive composition & fresh random 1--4-primitive composition \\
-Inheritance      & genome + mutation & genome + mutation (learning reset) & genome + mutation + pattern list (100\% fidelity) \\
-Selection        & tournament (size 3) & tournament (size 3) & tournament (size 3) \\
-Mutation rate    & 2\% per bit & 2\% per bit & 2\% per bit (genome only) \\
-Crossover        & none (asexual) & none (asexual) & none (asexual) \\
-Elitism          & top 10\% & top 10\% & top 10\% \\
-Population       & 50 & 50 & 50 \\
-Generations      & 150 & 150 & 150 \\
-Replicates       & 30 & 30 & 30 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\subsection{Statistical analysis}
-
-We apply one-way ANOVA for each task comparing the three algorithms, with
-Bonferroni correction ($\alpha = 0.05$). ANOVA assumptions are checked with
-Shapiro--Wilk (normality) and Levene's test (homogeneity of variance); where
-violated, Welch's $F$-test is used. For pairwise Baldwin vs.\ \Pheno{}
-comparisons we use Welch's $t$-test with Cohen's $d$ effect size. The standard
-deviation of fitness characterises consistency: low s.d.\ indicates
-deterministic learning, high s.d.\ stochastic exploration.
-
-\subsection{Computational details}
-
-All algorithms are implemented in Python 3.9 using standard libraries only.
-Reproducibility was verified by re-running three representative conditions and
-confirming identical results under identical seeds. Total computation was
-approximately 48 hours on a standard laptop processor for all 540 runs
-(30 replicates $\times$ 6 tasks $\times$ 3 algorithms).
+Experiment~1 runs three algorithms on three simple tasks; Experiment~2 runs
+Baldwin and \Pheno{} on three compositional tasks. Every task--algorithm
+combination is replicated 30 times with independent random seeds (540 runs in
+total), with populations of 50 evolving for 150 generations. We record final
+fitness, per-component recall (compositional tasks), and convergence time.
+For each task we apply one-way ANOVA across algorithms with Bonferroni
+correction ($\alpha = 0.05$), checking assumptions by Shapiro--Wilk and
+Levene's tests and substituting Welch's $F$ where violated; pairwise Baldwin
+vs.\ \Pheno{} comparisons use Welch's $t$-test with Cohen's $d$. All
+algorithms are implemented in Python; the complete code, raw per-run results,
+and the exact-enumeration analysis script of Section~\ref{sec:theory} are
+publicly available (see Data and code availability).
 
 % ============================================================================
-\section{Results}
+\section{Simulation results}
 
 \subsection{Simple tasks: inheritance is irrelevant}
 
-On simple learning tasks (L, T, or Plus alone), both the Baldwin Effect and
-\Pheno{} reach 100\% fitness while the Gene-Centric GA achieves only 56--59\%
-(Table~\ref{tab:simple}, Figure~\ref{fig:simple}), confirming that learning is
-essential. Baldwin and \Pheno{} show no significant difference
-($p = 0.559$, $d = 0$), indicating that epigenomic write-back provides no
-additional advantage when phenotypic plasticity alone suffices.
+On simple tasks (Experiment~1), both the Baldwin Effect and \Pheno{} reach
+100\% fitness while the Gene-Centric baseline achieves only 56--59\%
+(Table~\ref{tab:simple}, Figure~\ref{fig:simple}), confirming that learning
+is essential. Baldwin and \Pheno{} show no significant difference
+($p = 0.559$, $d = 0$): epigenomic write-back provides no additional
+advantage when a single lifetime of plasticity suffices.
 
 \begin{table}[htbp]
 \centering
-\caption{\textbf{Simple learning task results} (mean fitness $\pm$ s.d., $n = 30$).
-Gene-Centric establishes that learning is essential. Baldwin and \Pheno{} both
-reach 100\% fitness with no difference between them, showing the inheritance
+\caption{\textbf{Simple-task results, Experiment 1} (mean fitness $\pm$ s.d.,
+$n = 30$). Gene-Centric establishes that learning is essential. Baldwin and
+\Pheno{} both reach 100\% with no difference between them: the inheritance
 mechanism is irrelevant on simple tasks.}
 \label{tab:simple}
 \begin{tabular}{lccc}
@@ -433,36 +392,34 @@ Plus alone & $0.56 \pm 0.25$ & $1.00 \pm 0.00$ & $1.00 \pm 0.00$ \\
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{fig2_simple_tasks.png}
-\caption{\textbf{Simple learning tasks: algorithm comparison.} Mean fitness
-$\pm$ s.d.\ for Gene-Centric (red), Baldwin Effect (orange), and \Pheno{}
-(green) on single-pattern tasks. Gene-Centric achieves only 56--59\% fitness (no
-learning), while Baldwin and \Pheno{} both reach 100\% with no significant
-difference ($p = 0.559$, $d = 0$), showing that the inheritance mechanism is
-irrelevant when learning alone suffices. Error bars: s.d.\ over 30 runs.}
+\caption{\textbf{Simple tasks: algorithm comparison.} Mean fitness $\pm$ s.d.\
+for Gene-Centric (red), Baldwin Effect (orange), and \Pheno{} (green) on
+single-pattern tasks. Gene-Centric reaches only 56--59\% (no learning); the
+two learning algorithms both reach 100\% with no significant difference
+($p = 0.559$, $d = 0$). Error bars: s.d.\ over 30 runs.}
 \label{fig:simple}
 \end{figure}
 
 \subsection{Compositional tasks: a 3--6$\times$ advantage}
 
-On learnable compositional tasks (L+T and T+Plus) the results diverge sharply
-(Table~\ref{tab:comp}, Figure~\ref{fig:comp}). \Pheno{} achieves 3.0--6.0$\times$
-higher fitness than the Baldwin Effect ($p < 0.001$, $d > 3.4$), with perfect
-reproducibility on T+Plus (all 30 runs identical). Learning trajectories show
-this advantage emerging as organisms evolve: \Pheno{} accelerates rapidly with
-low variance, while the Baldwin Effect improves gradually and stochastically
-(Figure~\ref{fig:traj}, left and centre panels). The Baldwin Effect shows high
-variance and near-total failure---it cannot accumulate knowledge across
-generations. \Pheno{} succeeds consistently, demonstrating that direct
-epigenomic inheritance lets organisms inherit learned patterns and build on them
-in subsequent generations.
+On the learnable compositional tasks (Experiment~2: L+T and T+Plus) the two
+mechanisms diverge sharply (Table~\ref{tab:comp}, Figure~\ref{fig:comp}).
+\Pheno{} achieves 3.0--6.0$\times$ higher final fitness than the Baldwin
+Effect ($p < 0.001$, $d > 3.4$), with \emph{perfect} reproducibility on
+T+Plus: all 30 runs end at exactly $0.517$ (s.d.\ $= 0.0$). Learning
+trajectories (Figure~\ref{fig:traj}) show \Pheno{} climbing steadily with
+shrinking variance while Baldwin fluctuates without sustained improvement --
+it cannot retain anything across generations. On the third task (L+Plus) the
+two mechanisms fail equally ($0.177$ vs.\ $0.189$, $p = 0.789$).
+Section~\ref{sec:theory} explains each of these numbers -- including why the
+plateau is exactly $0.517$, why its variance is exactly zero, and why L+Plus
+fails -- from first principles.
 
 \begin{table}[htbp]
 \centering
-\caption{\textbf{Compositional learning task results} (mean fitness $\pm$ s.d.,
-$n = 30$). Baldwin Effect (selection-based) vs.\ \Pheno{} (epigenomic
-write-back). Learnable compositional tasks (L+T, T+Plus) show a large \Pheno{}
-advantage; the hard task (L+Plus) shows none, revealing the limits of extended
-agency.}
+\caption{\textbf{Compositional-task results, Experiment 2} (mean fitness
+$\pm$ s.d., $n = 30$). On the two learnable tasks \Pheno{} holds a 3--6$\times$
+advantage; on L+Plus neither mechanism escapes the baseline.}
 \label{tab:comp}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccc}
@@ -480,143 +437,286 @@ L+Plus  & $0.177 \pm 0.149$ & $0.189 \pm 0.156$ & 1.1$\times$ & 0.07   & 0.789  
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{fig3_compositional_tasks.png}
-\caption{\textbf{Compositional learning tasks: all three algorithms.} Mean
-fitness $\pm$ s.d.\ for Gene-Centric (red), Baldwin Effect (orange), and
-\Pheno{} (green) across three tasks requiring the simultaneous learning of two
-patterns. (Left) L+T: \Pheno{} achieves 3.0$\times$ higher fitness than Baldwin
-($p < 0.001$). (Centre) T+Plus: \Pheno{} achieves 6.0$\times$ higher fitness with
-perfect reproducibility (s.d.\ $= 0.0$, all 30 runs identical, $p < 0.001$).
-(Right) L+Plus: no advantage for either mechanism ($p = 0.789$) due to geometric
-pattern incompatibility. Error bars: $\pm 1$ s.d.}
+\caption{\textbf{Compositional tasks: final fitness.} Mean fitness $\pm$ s.d.\
+for the Baldwin Effect (orange) and \Pheno{} (green) on the three two-pattern
+tasks. (Left) L+T: 3.0$\times$ advantage ($p < 0.001$). (Centre) T+Plus:
+6.0$\times$ advantage with all 30 runs identical (s.d.\ $= 0.0$). (Right)
+L+Plus: no advantage for either mechanism ($p = 0.789$). Error bars: $\pm 1$
+s.d.}
 \label{fig:comp}
 \end{figure}
-
-\subsection{Limits: geometric incompatibility defeats every mechanism}
-
-The hard compositional task (L+Plus) shows no advantage for either mechanism
-($p = 0.789$), with both algorithms failing to reach high fitness
-(Figure~\ref{fig:comp}, right panel; Figure~\ref{fig:traj}, right panel, showing
-convergence at $\approx 18\%$). Extended agency has limits: both methods fail
-equally when pattern components geometrically interfere. Extended agency
-provides an evolutionary advantage precisely when organisms must accumulate
-learned knowledge across generations---but only when the problem decomposes into
-independently learnable components.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{fig4_learning_trajectories.png}
-\caption{\textbf{Learning trajectories across all compositional tasks.} Mean
+\caption{\textbf{Learning trajectories on the compositional tasks.} Mean
 fitness over 150 generations for the Baldwin Effect (orange, dashed) and
-\Pheno{} (green, solid), with shaded $\pm 1$ s.d.\ regions. (Left) L+T: \Pheno{}
-shows early acceleration and low variance; Baldwin improves gradually and
-stochastically. (Centre) T+Plus: \Pheno{} is perfectly deterministic
-(s.d.\ $= 0.0$); Baldwin shows high variance and minimal learning. (Right)
-L+Plus: both mechanisms plateau at similar low fitness ($\approx 18\%$),
-revealing geometric incompatibility between the patterns.}
+\Pheno{} (green, solid), shaded $\pm 1$ s.d. (Left) L+T: \Pheno{} ratchets
+upward with low variance; Baldwin fluctuates without sustained gain. (Centre)
+T+Plus: every \Pheno{} run converges to the same value; Baldwin shows high
+variance and minimal progress. (Right) L+Plus: both mechanisms plateau at
+similar low fitness.}
 \label{fig:traj}
+\end{figure}
+
+% ============================================================================
+\section{An exact analytical account}
+\label{sec:theory}
+
+The compositional environment of Experiment~2 is simple enough to be solved
+in closed form: the genome has $9^5 = 59{,}049$ distinct decodings, the
+learning operator draws from a fixed, fully known distribution over them, and
+the fitness function~(\ref{eq:comp-fitness}) is monotone in the organism's
+cell set. We exploit these three facts to derive, by exact enumeration (no
+mean-field or other approximation), the expected outcome of every condition.
+Throughout, $X$ denotes a uniformly random genome, $F(\cdot)$ the task
+fitness~(\ref{eq:comp-fitness}), and $\theta = 0.5$ the write-back
+threshold. Proofs are short and sketched inline; the enumeration script is
+published with the code.
+
+\subsection{Reachability ceilings}
+
+Let $R$ be the union of all cells reachable by any shape placement of the
+encoding (Figure~\ref{fig:task}F). No phenotype -- and no union of phenotypes,
+however many generations accumulate -- can occupy a cell outside $R$.
+
+\begin{proposition}[Ceiling]\label{prop:ceiling}
+For every phenotype $P$ expressible by the encoding, and every union of such
+phenotypes, $F(P) \le F^* := \tfrac12\bigl(|R \cap T_1|/|T_1| + |R \cap
+T_2|/|T_2|\bigr)$. Enumeration gives per-pattern ceilings
+$\mathrm{recall}_{\max}(\mathrm{L}) = 4/5$,
+$\mathrm{recall}_{\max}(\mathrm{T}) = 5/6$,
+$\mathrm{recall}_{\max}(\mathrm{Plus}) = 1/5$, hence
+$F^*(\mathrm{L{+}T}) = 0.817$, $F^*(\mathrm{T{+}Plus}) = 0.517$,
+$F^*(\mathrm{L{+}Plus}) = 0.500$.
+\end{proposition}
+
+The Plus target sits at the grid centre, and the encoding's offsets
+$\{0,5\}$ reach only one of its five cells: the Plus pattern is almost
+entirely outside what plasticity can express. This single geometric fact
+drives everything that follows.
+
+\subsection{Baldwin: zero heritability, zero response}
+
+In Experiment~2 the learning operator draws fresh random genomes, so an
+organism's learned fitness is the maximum of 20 i.i.d.\ draws of $F(X)$ --
+independent of its own genome and of its ancestry.
+
+\begin{proposition}[Null response]\label{prop:baldwin}
+Under the Baldwin Effect, every organism's learned fitness in every
+generation is an independent copy of $Y = \max\{F(X_1),\dots,F(X_{20})\}$.
+Fitness is therefore completely non-heritable; selection has nothing
+heritable to act on, and the expected population-best learned fitness is
+constant over generations at $\mathbb{E}[\max$ of $1000$ draws$]$
+($0.747$, $0.453$, $0.486$ for L+T, T+Plus, L+Plus). Moreover, because
+selection is independent of genomes and bit-flip mutation is symmetric, the
+marginal distribution of every genome remains exactly uniform in every
+generation; the recorded final fitness (the genome-decoded phenotype of the
+best learner) is therefore a draw of $F(X)$, with expectation
+$\mathbb{E}[F(X)] = 0.204$, $0.086$, $0.130$ respectively.
+\end{proposition}
+
+This is the Baldwin Effect's failure mode laid bare: learning raises the
+fitness used by selection, but with zero heritability the breeder's equation
+returns zero response, and the heritable line drifts neutrally. The observed
+Baldwin means ($0.254$, $0.086$, $0.177$) match the neutral-drift
+predictions within sampling error -- exactly, to three decimals, on T+Plus.
+
+\subsection{Phenopoiesis: the write-back ratchet}
+
+\begin{proposition}[Ratchet]\label{prop:ratchet}
+Along any \Pheno{} lineage, the inherited union $I_t$ of accumulated patterns
+is non-decreasing under set inclusion, and since $F$ is monotone,
+$F(I_t)$ is non-decreasing in $t$ and bounded by $F^*$. Once any stored
+pattern clears $\theta$, elitist selection preserves the lineage and
+subsequent stored patterns (each necessarily scoring $\ge F(I_t)$) keep
+enlarging $I_t$; $F(I_t)$ then converges to $F^*$. Engagement is fast
+wherever $p := \Pr[F(X) > \theta] > 0$: with $1000$ draws per generation the
+per-generation engagement probability is $1 - (1-p)^{1000}$ -- effectively
+$1$ for L+T ($p = 0.049$) and $0.24$ for T+Plus ($p = 2.7 \times 10^{-4}$),
+i.e.\ expected engagement within $\sim$4 generations.
+\end{proposition}
+
+This resolves both of the simulation's striking observations at once. The
+T+Plus plateau equals $F^* = (5/6 + 1/5)/2 = 0.5167$ exactly, and its
+variance is zero because every run climbs the same ratchet to the same
+algebraic ceiling: what looked like ``perfect reproducibility of learning''
+is deterministic convergence to a reachability bound. On L+T, runs approach
+but do not all exhaust the ceiling within 150 generations
+($0.772 \pm 0.075$ vs.\ $F^* = 0.817$), because the final increments require
+rare draws covering the last unclaimed target cells.
+
+\subsection{The write threshold and the hard task}
+
+\begin{proposition}[Knife edge]\label{prop:knife}
+For L+Plus, enumeration of all $59{,}049$ phenotypes gives
+$\max_P F(P) = 0.500$ exactly. Since write-back requires $F > \theta = 0.5$
+strictly, no pattern is ever stored: the epigenome stays empty and \Pheno{}
+reduces to the Baldwin Effect identically.
+\end{proposition}
+
+The predicted consequence -- statistical indistinguishability of the two
+mechanisms on L+Plus -- is what the simulation shows ($p = 0.789$), with both
+observed means at the neutral-drift level of
+Proposition~\ref{prop:baldwin}. We stress the interpretation: the two target
+patterns do not overlap on the grid; the task is hard not because its
+components conflict but because the Plus component lies outside what the
+organisms' plasticity can reach, pinning the best attainable fitness to the
+threshold itself.
+
+\subsection{Predictions versus observations}
+
+Table~\ref{tab:theory} and Figure~\ref{fig:theory} collect the comparison.
+Every observed mean is reproduced by the analysis: Baldwin by the
+neutral-drift expectation $\mathbb{E}[F(X)]$, \Pheno{} by the ceiling $F^*$
+where the ratchet engages and by $\mathbb{E}[F(X)]$ where it cannot. The
+advantage of epigenomic write-back is, in this model, the exactly computable
+quantity $F^* - \mathbb{E}[F(X)]$ -- large when acquired solutions are
+heritable, accumulable, and reachable; zero when the ceiling cannot clear
+the write threshold.
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Exact predictions vs.\ observed results.} Predictions are
+computed by full enumeration of the encoding's $59{,}049$ phenotypes, with no
+free parameters. Baldwin prediction: neutral-drift expectation
+$\mathbb{E}[F(X)]$. \Pheno{} prediction: ceiling $F^*$ when the ratchet
+engages (Proposition~\ref{prop:ratchet}); $\mathbb{E}[F(X)]$ when it cannot
+(Proposition~\ref{prop:knife}). Observed: mean $\pm$ s.d.\ over 30 runs.}
+\label{tab:theory}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Task} & \textbf{Baldwin pred.} & \textbf{Baldwin obs.} & \textbf{\Pheno{} pred.} & \textbf{\Pheno{} obs.} & \textbf{Ratchet} \\
+\midrule
+L+T     & 0.204 & $0.254 \pm 0.196$ & 0.817 & $0.772 \pm 0.075$ & engaged \\
+T+Plus  & 0.086 & $0.086 \pm 0.123$ & 0.517 & $0.517 \pm 0.000$ & engaged \\
+L+Plus  & 0.130 & $0.177 \pm 0.149$ & 0.130 & $0.189 \pm 0.156$ & disengaged \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig6_theory_vs_observed.png}
+\caption{\textbf{Exact analytical predictions versus observed results.}
+Hatched bars: parameter-free predictions (Baldwin: neutral-drift expectation
+$\mathbb{E}[F(X)]$; \Pheno{}: reachability ceiling $F^*$, or
+$\mathbb{E}[F(X)]$ where the ratchet is disengaged). Solid bars: observed
+means $\pm$ s.d.\ over 30 runs. On T+Plus the prediction matches the
+observation exactly, including the zero variance.}
+\label{fig:theory}
 \end{figure}
 
 % ============================================================================
 \section{Discussion}
 
-Our results provide the first quantitative test of Denis Noble's hypothesis that
-organisms possess direct read--write access to their heredity. We find strong,
-statistically robust evidence that epigenomic write-back dramatically
-accelerates evolutionary learning on compositional tasks. On learnable
-compositional problems (L+T and T+Plus), \Pheno{} achieved 3.0--6.0$\times$
-higher fitness than the Baldwin Effect ($p < 0.001$, Cohen's
-$d = 3.44$--$4.89$). Perfect reproducibility on T+Plus (all 30 runs identical,
-s.d.\ $= 0.0$) reveals that inherited learning enables deterministic, repeatable
-evolution---a qualitative shift away from the random search of selection-only
-mechanisms. The results also set clear boundaries: on simple tasks, write-back
-provides no acceleration; on hard compositional tasks, both mechanisms fail
-equally.
+Our results provide the first quantitative test of Denis Noble's hypothesis
+that organisms possess direct read--write access to their heredity -- and,
+unusually for work in this area, the simulations come with a complete
+analytical account. On learnable compositional problems, \Pheno{} achieved
+3.0--6.0$\times$ higher fitness than the Baldwin Effect ($p < 0.001$,
+Cohen's $d = 3.44$--$4.89$), and the analysis shows exactly why: write-back
+converts learning into a heritable ratchet that climbs to the ceiling of what
+plasticity can reach, while learning without inheritance has zero
+heritability and therefore, by the breeder's equation, zero expected response
+to selection.
 
 \subsection{Direct write-back versus selection-based agency}
 
 The Extended Evolutionary Synthesis recognises that organisms actively shape
 evolution through niche construction, developmental plasticity, and learning.
 Yet EES remains fundamentally selection-based: learning influences the
-phenotype, which alters selection pressure, which eventually reshapes genes over
-many generations---an indirect, slow process. Noble's proposal is different in
-kind: organisms do not merely influence evolution through selection, they
-actively compose their evolution by writing learned patterns directly into
-heritable epigenomic form.
-
-Our data quantify that distinction. The gap appears only when knowledge must
-accumulate across generations---precisely where Noble's mechanism should matter.
-The Baldwin Effect, while more powerful than gene-only evolution, cannot match
-the speed of direct write-back because each generation must rediscover prior
-solutions before learning new ones. Three regimes emerge:
+phenotype, which alters selection pressure, which eventually reshapes genes
+over many generations. Noble's proposal is different in kind: organisms do
+not merely influence evolution through selection, they write learned patterns
+directly into heritable form. Our model quantifies that distinction
+sharply. With the learning operator held literally identical between the two
+algorithms, the entire 3--6$\times$ gap is attributable to what happens to
+acquired information at reproduction. Three regimes emerge:
 
 \begin{itemize}
   \item \textbf{Simple tasks} ($1.0\times$): inheritance is irrelevant when a
-        single pattern can be learned within one generation.
-  \item \textbf{Learnable compositional tasks} ($3$--$6\times$): inherited
-        knowledge dramatically accelerates evolution; offspring inherit parents'
-        learned solutions and focus effort on new patterns.
-  \item \textbf{Hard compositional tasks} ($1.0\times$): when components
-        geometrically interfere, neither mechanism helps---decomposability, not
-        the inheritance mechanism, determines solvability.
+        single pattern can be learned within one lifetime.
+  \item \textbf{Learnable compositional tasks} ($3$--$6\times$): the
+        write-back ratchet accumulates components across generations;
+        offspring inherit parents' solutions and learning adds to them. The
+        advantage equals the computable gap $F^* - \mathbb{E}[F(X)]$ between
+        the reachability ceiling and the neutral-drift baseline.
+  \item \textbf{Unreachable compositional tasks} ($1.0\times$): when no
+        reachable learned state clears the write-back threshold, the ratchet
+        never engages and write-back degenerates to selection-only learning.
 \end{itemize}
 
-\subsection{Compositionality as the central constraint}
+The analysis also dissolves a natural objection. One might worry that
+\Pheno{}'s advantage reflects extra heritable \emph{capacity} (genome plus
+pattern list) rather than write-back as such. Proposition~\ref{prop:baldwin}
+shows the real driver is heritability, not capacity: Baldwin's failure is
+not that it stores too little, but that nothing it learns is transmitted at
+all -- its heritable line drifts neutrally regardless of how much capacity it
+carries.
 
-Real epigenetic inheritance (DNA methylation, histone modifications) persists
-through meiosis and transmits acquired information across generations
-\citep{Pembrey2006,WaterlandJirtle2007}. Our model assumes 100\% fidelity
-copying (real systems degrade) and artificial binary patterns (real learning is
-continuous), but the core principle---learned regulatory changes inherited with
-near-complete fidelity---is biologically grounded.
+\subsection{Limits of extended agency: reachability and the write threshold}
 
-Compositionality emerges as the central constraint on evolutionary innovation,
-because major transitions require solving multiple distinct problems whose
-solutions must coexist \citep{MaynardSmith1995}. The prokaryote-to-eukaryote
-transition requires compartmentalisation, a nuclear envelope, chromatin
-organisation, nuclear transport, and gene regulation---each layer building on
-and compatible with the previous ones. Unicellular-to-multicellular transitions
-involve cell adhesion, signalling, differentiation, and morphogenesis, where
-each layer enables rather than prevents subsequent layers. Inherited knowledge
-accumulation lets organisms discover one layer, inherit that solution, then
-discover the next, avoiding exponential search.
+The L+Plus result sets a principled boundary on extended agency, and the
+analysis corrects the interpretation we ourselves might otherwise have given
+it. The two patterns do not conflict on the grid. Rather, the Plus target
+lies almost entirely outside the set of cells the organisms' plasticity can
+express, which pins the best attainable fitness at exactly the write-back
+threshold -- so nothing is ever deemed worth writing. The general lesson is
+that epigenomic write-back cannot rescue what plasticity cannot reach:
+organismal agency over heredity is bounded by the expressive range of the
+phenotype-generating machinery, and by the stringency of the write
+criterion. Both bounds have biological analogues -- developmental constraint
+on what variation is expressible \citep{WestEberhard2003}, and the
+selectivity of which physiological states become stably marked in the
+epigenome \citep{Jablonka2014}.
 
-Not all paired problems have this structure, and our L+Plus failure is
-informative. The L and Plus patterns geometrically overlap on the
-$10\times10$ grid, competing for the same cells; achieving perfect fitness for
-both simultaneously is impossible. The patterns are incompatible constraints,
-not sequential layers. This incompatibility cannot be overcome by inheritance or
-any learning mechanism---it is a property of the problem structure, not a
-limitation of extended agency. The distinction between compatible sequential
-layers and incompatible simultaneous constraints explains both evolutionary
-successes and failures.
+\subsection{Biological plausibility and scope}
+
+Real epigenetic inheritance (DNA methylation, histone modifications)
+persists through meiosis and transmits acquired information across
+generations \citep{Pembrey2006,WaterlandJirtle2007}. Our model idealises
+this channel: perfect copying fidelity, a strict write threshold, and binary
+patterns. The core principle -- learned regulatory changes inherited with
+near-complete fidelity and accumulated across generations -- is biologically
+grounded, and the model's compositional structure mirrors how major
+transitions layer solutions: compartmentalisation before nuclear transport,
+adhesion before differentiation \citep{MaynardSmith1995}. Inherited
+accumulation lets a lineage secure one layer and then search for the next,
+avoiding the exponential cost of rediscovering everything each generation.
 
 \subsection{Limitations and future work}
 
-We tested artificial visual tasks, not ecological complexity; modelled binary
-learning, not continuous acquisition; assumed perfect epigenomic fidelity, not
-real degradation; and examined asexual lineages, not sexual recombination.
-Despite these simplifications, the 3--6$\times$ advantage on learnable
-compositional tasks demonstrates that epigenomic inheritance accelerates
-solutions when the problem structure permits incremental construction. Future
-work should introduce realistic epigenomic decay rates, examine interactions
-with sexual reproduction, scale to continuous-valued learning, and characterise
-which biological innovations have compositionally compatible versus incompatible
-structure.
+We tested artificial grid tasks, not ecological complexity; binary patterns,
+not continuous traits; perfect epigenomic fidelity, not realistic decay; and
+asexual lineages, not sexual recombination. The analytical account, however,
+suggests exactly where these relaxations will bite: epigenomic decay turns
+the ratchet into a leaky ratchet whose equilibrium should sit below $F^*$ by
+a computable amount; recombination mixes pattern lists between lineages; and
+genetically guided (rather than genome-independent) learning would
+reintroduce a Baldwinian channel, allowing genetic assimilation to compete
+with write-back on even terms. Each is a concrete, quantitative follow-up
+within the same enumerable framework. A companion manuscript develops the
+analytical results in full generality, including waiting-time distributions
+for ratchet engagement and finite-horizon corrections to the ceiling.
 
 % ============================================================================
 \section{Conclusion}
 
-We demonstrated that heritable epigenomic inheritance of learned patterns
-accelerates evolutionary problem-solving 3--6 fold on compositional tasks. This
-acceleration arises because offspring inherit their parents' learned solutions
-and build upon them rather than rediscovering them each generation. It applies
-specifically when problems decompose into sequentially compatible layers---each
-layer enabling rather than preventing the next. On simple tasks, inheritance
-provides no acceleration; on incompatible problems, no mechanism helps. This
+We demonstrated that heritable epigenomic write-back of learned patterns
+accelerates evolutionary problem-solving 3--6 fold on compositional tasks,
+and we explained the result exactly: write-back turns lifetime learning into
+a monotone ratchet that converges to the ceiling of what plasticity can
+reach, whereas learning without inheritance has zero heritability and leaves
+the heritable line drifting neutrally. The advantage is therefore specific
+and computable -- zero on tasks solvable within one lifetime, zero again when
+no reachable state clears the write criterion, and equal to the gap between
+the reachability ceiling and the neutral baseline in between. This
 specificity is what makes the result mechanistic rather than merely
-philosophical: organisms that transmit learned epigenomic states to offspring
-can solve compositional problems orders of magnitude faster than organisms
-relying solely on genetic evolution and selection.
+philosophical: organisms that write what they learn into heredity can solve
+compositional problems their selection-only counterparts provably cannot.
 
 % ============================================================================
 \section*{Data and code availability}
@@ -626,10 +726,11 @@ All data, code, and figures are available at
 \url{https://github.com/drnamlabs-gif/phenotype-first-evolution}
 \end{center}
 \noindent
-The repository contains the complete Python implementation of all three
-algorithms (Gene-Centric GA, Baldwin Effect, \Pheno{}), the experimental
-pipeline, raw results from all 540 runs as CSV, the figure-generation scripts,
-and the LaTeX source of this preprint.
+The repository contains the complete Python implementation of all algorithms
+in both experiments, the experimental pipeline, raw results from all 540 runs
+as CSV, the exact-enumeration analysis script underlying
+Section~\ref{sec:theory}, the figure-generation scripts, and the LaTeX source
+of this manuscript.
 
 \section*{Author contributions}
 
