@@ -1,0 +1,32 @@
+{
+  "n_runs": 30,
+  "baldwin": {
+    "mean_fitness": 0.2538888888888889,
+    "std_fitness": 0.19591586125517763,
+    "mean_L": 0.34666666666666673,
+    "mean_T": 0.1611111111111111,
+    "mean_convergence": 150.0,
+    "success_rate": 0.0,
+    "both_present_rate": 6.666666666666667
+  },
+  "phenotype_first": {
+    "mean_fitness": 0.7722222222222223,
+    "std_fitness": 0.07494854201795578,
+    "mean_L": 0.7333333333333333,
+    "mean_T": 0.811111111111111,
+    "mean_convergence": 150.0,
+    "success_rate": 70.0,
+    "both_present_rate": 83.33333333333334
+  },
+  "statistical_tests": {
+    "anova_F": 177.07634626580918,
+    "anova_p": 2.830679464721756e-19,
+    "ttest_t": 13.30700365468534,
+    "ttest_p": 9.687517148772942e-16,
+    "cohens_d_fitness": 3.4358535695011705,
+    "cohens_d_L": 1.5648305911875777,
+    "cohens_d_T": 4.559581987703731,
+    "component_p_L": 3.316958114559098e-07,
+    "component_p_T": 9.792048353708547e-19
+  }
+}

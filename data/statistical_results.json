@@ -1,0 +1,98 @@
+{
+  "anova_fitness": {
+    "f_stat": 604.171121198915,
+    "p_value": 2.891487103836278e-139
+  },
+  "anova_convergence": {
+    "f_stat": 337.87340189264154,
+    "p_value": 9.055521031399436e-104
+  },
+  "pairwise_fitness": [
+    {
+      "method1": "Phenotype-First",
+      "method2": "Baldwin",
+      "t_stat": NaN,
+      "p_value": NaN,
+      "significant": "False"
+    },
+    {
+      "method1": "Phenotype-First",
+      "method2": "Lamarckian",
+      "t_stat": 12.243150609304179,
+      "p_value": 8.752008131433383e-21,
+      "significant": "True"
+    },
+    {
+      "method1": "Phenotype-First",
+      "method2": "Gene-Centric",
+      "t_stat": 65.0164447732919,
+      "p_value": 8.252057401493898e-77,
+      "significant": "True"
+    },
+    {
+      "method1": "Baldwin",
+      "method2": "Lamarckian",
+      "t_stat": 12.243150609304179,
+      "p_value": 8.752008131433383e-21,
+      "significant": "True"
+    },
+    {
+      "method1": "Baldwin",
+      "method2": "Gene-Centric",
+      "t_stat": 65.0164447732919,
+      "p_value": 8.252057401493898e-77,
+      "significant": "True"
+    },
+    {
+      "method1": "Lamarckian",
+      "method2": "Gene-Centric",
+      "t_stat": 14.698658894785922,
+      "p_value": 9.898793810568343e-29,
+      "significant": "True"
+    }
+  ],
+  "pairwise_convergence": [
+    {
+      "method1": "Phenotype-First",
+      "method2": "Baldwin",
+      "t_stat": -0.5853405181004786,
+      "p_value": 0.559146002334934,
+      "significant": "False"
+    },
+    {
+      "method1": "Phenotype-First",
+      "method2": "Lamarckian",
+      "t_stat": -12.297824728657101,
+      "p_value": 3.671859750102748e-21,
+      "significant": "True"
+    },
+    {
+      "method1": "Phenotype-First",
+      "method2": "Gene-Centric",
+      "t_stat": -137.97202498900924,
+      "p_value": 1.390990396873791e-105,
+      "significant": "True"
+    },
+    {
+      "method1": "Baldwin",
+      "method2": "Lamarckian",
+      "t_stat": -12.041932268373559,
+      "p_value": 6.834281782683676e-21,
+      "significant": "True"
+    },
+    {
+      "method1": "Baldwin",
+      "method2": "Gene-Centric",
+      "t_stat": -96.05213525108715,
+      "p_value": 1.1149504573685862e-91,
+      "significant": "True"
+    },
+    {
+      "method1": "Lamarckian",
+      "method2": "Gene-Centric",
+      "t_stat": -6.670573419049105,
+      "p_value": 2.0890773632355937e-09,
+      "significant": "True"
+    }
+  ]
+}
